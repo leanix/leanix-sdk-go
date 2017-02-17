@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <groupId>net.leanix</groupId>
+    <artifactId>leanix-sdk-go</artifactId>
+    <packaging>jar</packaging>
+
+    <version>1.0-SNAPSHOT</version>
+
+    <parent>
+        <groupId>net.leanix.poms</groupId>
+        <artifactId>sdk-parent</artifactId>
+        <version>0.9.9</version>
+        <relativePath />
+    </parent>
+
+    <name>leanix-sdk-go</name>
+
+    <description>SDK for Go to access leanIX REST API</description>
+
+    <url>https://dev.leanix.net</url>
+
+    <licenses>
+        <license>
+            <name>MIT License</name>
+            <url>http://www.opensource.org/licenses/mit-license.php</url>
+            <distribution>repo</distribution>
+        </license>
+    </licenses>
+
+    <properties>
+        <downloadSources>true</downloadSources>
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+        <!-- properties related to sdk code generation -->
+        <leanix-dropkit-sdk-utils-version>1.0.3</leanix-dropkit-sdk-utils-version>
+        <codegenHost>local-pf.leanix.net</codegenHost>
+        <swagger-inputSpec>https://${codegenHost}/api/v1/api-docs/</swagger-inputSpec>
+
+    </properties>
+
+    <profiles>
+        <profile>
+            <id>codegen</id>
+            <build>
+                <plugins>
+                    <plugin>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>enforce</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules combine.children="override">
+                                        <requireMavenVersion>
+                                            <version>3.0.5</version>
+                                        </requireMavenVersion>
+                                        <requirePluginVersions>
+                                            <message>Best Practice is to always define plugin versions!</message>
+                                            <banLatest>true</banLatest>
+                                            <banRelease>true</banRelease>
+                                            <banSnapshots>false</banSnapshots>
+                                            <phases>clean,deploy,site</phases>
+                                            <additionalPlugins>
+                                                <additionalPlugin>org.apache.maven.plugins:maven-eclipse-plugin</additionalPlugin>
+                                            </additionalPlugins>
+                                        </requirePluginVersions>
+                                        <requireJavaVersion>
+                                            <version>[1.7,1.9)</version>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 1) generate api using the swagger-codegen-maven-plugin -->
+                    <plugin>
+                        <groupId>io.swagger</groupId>
+                        <artifactId>swagger-codegen-maven-plugin</artifactId>
+                        <version>2.2.2-SNAPSHOT</version>
+                        <configuration>
+                            <inputSpec>${swagger-inputSpec}</inputSpec>
+                            <language>go</language>
+                            <apiPackage>net.leanix.api</apiPackage>
+                            <modelPackage>net.leanix.api.models</modelPackage>
+                            <addCompileSourceRoot>false</addCompileSourceRoot>
+<!--                            <configOptions>
+                                <groupId>net.leanix</groupId>
+                                <artifactId>leanix-sdk-java</artifactId>
+                                <invokerPackage>net.leanix.api.common</invokerPackage>
+                                <library>jersey2</library>
+                                <dateLibrary>joda</dateLibrary>
+                                <hideGenerationTimestamp>true</hideGenerationTimestamp>
+                            </configOptions> -->
+                            <!-- used to get help from cli that describes possible configOptions -->
+                            <!-- configHelp>true</configHelp -->
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>generate</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <!-- 2.) copy swagger's generated sources + adapted sources into /src/main/java folder -->
+                    <plugin>
+                        <artifactId>maven-antrun-plugin</artifactId>
+                        <version>1.8</version>
+                        <executions>
+                            <execution>
+                                <phase>process-sources</phase>
+                                <configuration>
+                                    <target>
+                                        <copy todir="src" overwrite="true">
+                                            <fileset dir="target/generated-sources/swagger/src" includes="**" />
+                                        </copy>
+                                         <copy todir="src/main/java" overwrite="true">
+                                            <fileset dir="src/main/resources/codegen-templates" includes="**" />
+                                        </copy>
+                                    </target>
+                                </configuration>
+                                <goals>
+                                    <goal>run</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+    </profiles>
+
+</project>
+
